@@ -164,22 +164,54 @@ class Obsidian():
     
     def delete_file(self, filepath: str) -> Any:
         """Delete a file or directory from the vault.
-        
+
         Args:
             filepath: Path to the file to delete (relative to vault root)
-            
+
         Returns:
             None on success
         """
         url = f"{self.get_base_url()}/vault/{filepath}"
-        
+
         def call_fn():
             response = requests.delete(url, headers=self._get_headers(), verify=self.verify_ssl, timeout=self.timeout)
             response.raise_for_status()
             return None
-            
+
         return self._safe_call(call_fn)
-    
+
+    def move_file(self, source: str, destination: str, update_links: bool = False) -> dict:
+        """Move or rename a file or folder in the vault.
+
+        Args:
+            source: Current path of the file/folder (relative to vault root)
+            destination: New path for the file/folder (relative to vault root)
+            update_links: If True, update all links pointing to this file (only for files, not folders)
+
+        Returns:
+            Dict with source, destination, and message
+        """
+        url = f"{self.get_base_url()}/vault/move"
+
+        payload = {
+            "source": source,
+            "destination": destination,
+            "updateLinks": update_links
+        }
+
+        def call_fn():
+            response = requests.post(
+                url,
+                headers=self._get_headers() | {'Content-Type': 'application/json'},
+                json=payload,
+                verify=self.verify_ssl,
+                timeout=self.timeout
+            )
+            response.raise_for_status()
+            return response.json()
+
+        return self._safe_call(call_fn)
+
     def search_json(self, query: dict) -> Any:
         url = f"{self.get_base_url()}/search/"
         
