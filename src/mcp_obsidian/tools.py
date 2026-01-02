@@ -369,7 +369,60 @@ class DeleteFileToolHandler(ToolHandler):
                text=f"Successfully deleted {args['filepath']}"
            )
        ]
-   
+
+
+class MoveFileToolHandler(ToolHandler):
+    def __init__(self):
+        super().__init__("obsidian_move_file")
+
+    def get_tool_description(self):
+        return Tool(
+            name=self.name,
+            description="Move or rename a file or folder in the vault. Can also update all links pointing to the moved file.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "source": {
+                        "type": "string",
+                        "description": "Current path of the file or folder to move (relative to vault root)",
+                        "format": "path"
+                    },
+                    "destination": {
+                        "type": "string",
+                        "description": "New path for the file or folder (relative to vault root)",
+                        "format": "path"
+                    },
+                    "update_links": {
+                        "type": "boolean",
+                        "description": "If true, automatically update all links pointing to the moved file. Only works for files, not folders. (default: false)",
+                        "default": False
+                    }
+                },
+                "required": ["source", "destination"]
+            }
+        )
+
+    def run_tool(self, args: dict) -> Sequence[TextContent | ImageContent | EmbeddedResource]:
+        if "source" not in args:
+            raise RuntimeError("source argument missing in arguments")
+        if "destination" not in args:
+            raise RuntimeError("destination argument missing in arguments")
+
+        source = args["source"]
+        destination = args["destination"]
+        update_links = args.get("update_links", False)
+
+        api = obsidian.Obsidian(api_key=api_key, host=obsidian_host)
+        result = api.move_file(source, destination, update_links)
+
+        return [
+            TextContent(
+                type="text",
+                text=f"Successfully moved '{source}' to '{destination}'"
+            )
+        ]
+
+
 class ComplexSearchToolHandler(ToolHandler):
    def __init__(self):
        super().__init__("obsidian_complex_search")
